@@ -50,8 +50,6 @@ RUN set -ex \
   && sed -i 's/^# en_US.UTF-8 UTF-8$/en_US.UTF-8 UTF-8/g' /etc/locale.gen \
   && locale-gen \
   && update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 \
-  && useradd -ms /bin/bash -d ${AIRFLOW_HOME} airflow \
-  # && useradd -ms /bin/bash airflow \
   && pip install -U pip setuptools wheel \
   && export PYTHON_VERSION="$(python --version | cut -d " " -f 2 | cut -d "." -f 1-2)" \
   && export CONSTRAINT_URL="https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PYTHON_VERSION}.txt" \
@@ -118,14 +116,11 @@ ENV PATH $PATH:/usr/local/spark/bin
 ###############################
 ## Finish SPARK files and variables
 ###############################
-COPY dags ${AIRFLOW_HOME}/airflow/dags
 
-RUN chown -R airflow ${AIRFLOW_HOME}
 RUN chmod +x entrypoint.sh
 
 EXPOSE 8080 5555 8793
 
-USER airflow
 WORKDIR ${AIRFLOW_HOME}
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["webserver"] # set default arg for entrypoint

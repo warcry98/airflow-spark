@@ -31,6 +31,7 @@ services:
       - LOAD_EX=n
       - EXECUTOR=Local
     volumes:
+      - ./docker/docker-airflow/dags:/root/airflow/dags
       - ./spark/app:/usr/local/spark/app
       - ./spark/resources:/usr/local/spark/resources
     ports:
@@ -40,7 +41,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "[ -f /usr/local/airflow/airflow-webserver.pid ]"
+          "[ -f /root/airflow/airflow-webserver.pid ]"
         ]
       interval: 30s
       timeout: 30s
