@@ -1,7 +1,6 @@
 version: '3'
 services:
   postgres:
-    # image: postgres:15
     build:
       context: ./docker/postgres/
       dockerfile: Dockerfile
@@ -10,9 +9,6 @@ services:
     restart: on-failure
     networks:
       - default_net
-      # volumes:
-      # Create Test database on Postgresql
-      # - ./docker/docker-airflow/pg-init-scripts:/docker-entrypoint-initdb.d
     environment:
       - POSTGRES_USERS=airflow:airflow|test:postgres
       - POSTGRES_DATABASES=airflow:airflow|test:test
@@ -26,7 +22,7 @@ services:
       dockerfile: Dockerfile
     image: airflow-spark
     container_name: airflow-webserver
-    restart: always
+    restart: on-failure
     networks:
       - default_net
     depends_on:
@@ -35,7 +31,6 @@ services:
       - LOAD_EX=n
       - EXECUTOR=Local
     volumes:
-      - ./dags:/usr/local/airflow/dags
       - ./spark/app:/usr/local/spark/app
       - ./spark/resources:/usr/local/spark/resources
     ports:
@@ -51,9 +46,12 @@ services:
       timeout: 30s
       retries: 3
 
-  # Spark with 1 worker
+  # Spark with 3 worker
   spark:
-    image: bitnami/spark:3.2.4
+    image: spark
+    build:
+      context: ./docker/docker-spark/
+      dockerfile: Dockerfile
     user: root
     hostname: spark
     restart: on-failure
@@ -70,11 +68,14 @@ services:
       - ./spark/app:/usr/local/spark/app
       - ./spark/resources:/usr/local/spark/resources
     ports:
-      - 8181:8080
+      - 8181:8181
       - 7077:7077
 
   spark-worker-1:
-    image: bitnami/spark:3.2.4
+    image: spark
+    build:
+      context: ./docker/docker-spark/
+      dockerfile: Dockerfile
     user: root
     restart: on-failure
     container_name: spark-worker-1
@@ -92,6 +93,47 @@ services:
     volumes:
       - ./spark/app:/usr/local/spark/app
       - ./spark/resources:/usr/local/spark/resources
+
+  # spark:
+  #   image: bitnami/spark:3.2.4
+  #   user: root
+  #   hostname: spark
+  #   restart: on-failure
+  #   container_name: spark-master
+  #   networks:
+  #     - default_net
+  #   environment:
+  #     - SPARK_MODE=master
+  #     - SPARK_RPC_AUTHENTICATION_ENABLED=no
+  #     - SPARK_RPC_ENCRYPTION_ENABLED=no
+  #     - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+  #     - SPARK_SSL_ENABLED=no
+  #   volumes:
+  #     - ./spark/app:/usr/local/spark/app
+  #     - ./spark/resources:/usr/local/spark/resources
+  #   ports:
+  #     - 8181:8080
+  #     - 7077:7077
+
+  # spark-worker-1:
+  #   image: bitnami/spark:3.2.4
+  #   user: root
+  #   restart: on-failure
+  #   container_name: spark-worker-1
+  #   networks:
+  #     - default_net
+  #   environment:
+  #     - SPARK_MODE=worker
+  #     - SPARK_MASTER_URL=spark://spark:7077
+  #     - SPARK_WORKER_MEMORY=1G
+  #     - SPARK_WORKER_CORES=1
+  #     - SPARK_RPC_AUTHENTICATION_ENABLED=no
+  #     - SPARK_RPC_ENCRYPTION_ENABLED=no
+  #     - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+  #     - SPARK_SSL_ENABLED=no
+  #   volumes:
+  #     - ./spark/app:/usr/local/spark/app
+  #     - ./spark/resources:/usr/local/spark/resources
 
   # Jupyter notebook
   jupyter-spark:

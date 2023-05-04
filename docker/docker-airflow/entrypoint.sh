@@ -16,7 +16,8 @@ TRY_LOOP="20"
 : "${AIRFLOW_PASSWORD:="airflow"}"
 
 # Defaults and back-compat
-: "${AIRFLOW__CORE__FERNET_KEY:=${FERNET_KEY:=$(python -c "from cryptography.fernet import Fernet; FERNET_KEY = Fernet.generate_key().decode(); print(FERNET_KEY)")}}"
+# : "${AIRFLOW__CORE__FERNET_KEY:=${FERNET_KEY:=$(python -c "from cryptography.fernet import Fernet; FERNET_KEY = Fernet.generate_key().decode(); print(FERNET_KEY)")}}"
+: "${AIRFLOW__CORE__FERNET_KEY:="UKMzEm3yIuFYEq1y3-2FxPNWSVwRASpahmQ9kQfEr8E="}"
 : "${AIRFLOW__CORE__EXECUTOR:=${EXECUTOR:-Sequential}Executor}"
 #: "${AIRFLOW_CONN_POSTGRES_TEST:=${CONN_POSTGRES_TEST}}"
 

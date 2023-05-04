@@ -9,7 +9,7 @@ ENV TERM linux
 ARG AIRFLOW_VERSION=2.6.0
 ARG SPARK_VERSION=3.2.4
 ARG HADOOP_VERSION=3.2
-ARG AIRFLOW_HOME=/usr/local
+ARG AIRFLOW_HOME=/usr/local/app
 ARG AIRFLOW_DEPS=""
 ARG PYTHON_DEPS=""
 ENV AIRFLOW_GPL_UNIDECODE yes
@@ -20,6 +20,8 @@ ENV LANG en_US.UTF-8
 ENV LC_ALL en_US.UTF-8
 ENV LC_CTYPE en_US.UTF-8
 ENV LC_MESSAGES en_US.UTF-8
+
+COPY requirements.txt ./requirements.txt
 
 RUN set -ex \
   && buildDeps=' \
@@ -49,11 +51,14 @@ RUN set -ex \
   && locale-gen \
   && update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 \
   && useradd -ms /bin/bash -d ${AIRFLOW_HOME} airflow \
+  # && useradd -ms /bin/bash airflow \
   && pip install -U pip setuptools wheel \
   && export PYTHON_VERSION="$(python --version | cut -d " " -f 2 | cut -d "." -f 1-2)" \
   && export CONSTRAINT_URL="https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PYTHON_VERSION}.txt" \
   && pip install "apache-airflow[async,crypto,celery,postgres,hive,google,jdbc,mysql,ssh${AIRFLOW_DEPS:+,}${AIRFLOW_DEPS}]==${AIRFLOW_VERSION}" --constraint "${CONSTRAINT_URL}" \
   && if [ -n "${PYTHON_DEPS}" ]; then pip install ${PYTHON_DEPS}; fi \
+  && pip install pyspark==${SPARK_VERSION} \
+  && pip install -r requirements.txt \
   && apt-get purge --auto-remove -yqq $buildDeps \
   && apt-get clean \
   && rm -rf \
@@ -81,6 +86,7 @@ RUN apt-get update -yqq \
   mlocate \
   curl \
   wget \
+  procps \
   && cd "/tmp" \
   && wget https://dlcdn.apache.org/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz \
   && tar -xvzf spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz \
@@ -112,8 +118,9 @@ ENV PATH $PATH:/usr/local/spark/bin
 ###############################
 ## Finish SPARK files and variables
 ###############################
+COPY dags ${AIRFLOW_HOME}/airflow/dags
 
-RUN chown -R airflow: ${AIRFLOW_HOME}
+RUN chown -R airflow ${AIRFLOW_HOME}
 RUN chmod +x entrypoint.sh
 
 EXPOSE 8080 5555 8793

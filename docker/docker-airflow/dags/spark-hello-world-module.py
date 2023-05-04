@@ -29,7 +29,6 @@ dag = DAG(
     dag_id="spark-hello-world-module",
     description="This DAG runs a Pyspark app that uses modules.",
     default_args=default_args,
-    schedule_interval=timedelta(1)
 )
 
 start = EmptyOperator(task_id="start", dag=dag)
